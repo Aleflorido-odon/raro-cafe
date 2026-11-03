@@ -1,0 +1,6 @@
+RARO CAFÉ · web estática (HTML + CSS + JavaScript)
+Editar contenido y productos: js/datos.js
+Editar textos fijos: index.html, carta.html, contacto.html
+Aspecto (colores, tamaños): css/style.css
+Probar en tu ordenador: doble clic en index.html
+Publicar: sube TODA esta carpeta (con index.html en la raíz) a GitHub -> Vercel/Netlify/Cloudflare Pages, o arrástrala a app.netlify.com/drop
