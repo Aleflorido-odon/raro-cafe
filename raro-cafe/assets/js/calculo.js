@@ -4,7 +4,7 @@
 (function (root) {
   function redondear(n) { return Math.round(n * 100) / 100; }
 
-  function calcularPedido(catalogo, lineas, entrega) {
+  function calcularPedido(catalogo, lineas, entrega, codigo) {
     var errores = [];
     var detalle = [];
     var subtotal = 0;
@@ -25,13 +25,19 @@
     var t = catalogo.tienda;
     var envio = 0;
     if (entrega === 'envio') envio = subtotal >= t.envioGratisDesde ? 0 : t.envio;
+    var cod = String(codigo || '').trim().toUpperCase();
+    var codigoValido = !!cod && cod === String(t.codigoBienvenida || '').toUpperCase();
+    if (cod && !codigoValido) errores.push('El código ' + cod + ' no existe. Prueba con ' + t.codigoBienvenida + '.');
+    var descuento = codigoValido ? redondear(subtotal * (t.descuentoBienvenida || 0)) : 0;
     return {
       ok: errores.length === 0,
       errores: errores,
       lineas: detalle,
       subtotal: subtotal,
       envio: envio,
-      total: redondear(subtotal + envio),
+      codigo: codigoValido ? cod : '',
+      descuento: descuento,
+      total: redondear(subtotal - descuento + envio),
       faltaParaEnvioGratis: entrega === 'envio' && subtotal < t.envioGratisDesde ? redondear(t.envioGratisDesde - subtotal) : 0
     };
   }

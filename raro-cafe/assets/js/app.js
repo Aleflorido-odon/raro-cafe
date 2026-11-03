@@ -15,6 +15,10 @@
     boton.textContent = abierto ? 'Cerrar' : 'Menú';
   });
 
+  /* ---------- Vídeo de portada (si existe assets/video/cafe.mp4) ---------- */
+  var video = $('.fondo-video');
+  if (video) video.addEventListener('loadeddata', function () { video.classList.add('listo'); });
+
   /* ---------- Cesta (se guarda en este navegador) ---------- */
   var CLAVE = 'raro_cesta';
   function leerCesta() { try { return JSON.parse(localStorage.getItem(CLAVE)) || []; } catch (e) { return memoria; } }
@@ -195,9 +199,10 @@
   if (pagina === 'cesta') {
     var form = $('#pedido');
     var entrega = function () { var r = $('input[name="entrega"]:checked'); return r ? r.value : 'recogida'; };
+    var codigo = function () { var c = $('#codigo'); return c ? c.value : ''; };
     var pintarCesta = function () {
       var c = leerCesta();
-      var r = RaroCalc.calcularPedido(catalogo, c, entrega());
+      var r = RaroCalc.calcularPedido(catalogo, c, entrega(), codigo());
       $('#vacia').hidden = c.length > 0;
       $('#llena').hidden = c.length === 0;
       $('#lineas').innerHTML = r.lineas.map(function (l) {
@@ -210,9 +215,14 @@
       $('#subtotal').textContent = eur(r.subtotal);
       $('#envio').textContent = entrega() === 'recogida' ? 'Gratis (recoges en tienda)' : r.envio === 0 ? 'Gratis' : eur(r.envio);
       $('#total').textContent = eur(r.total);
+      $('#fila-descuento').hidden = !r.descuento;
+      $('#descuento').textContent = '−' + eur(r.descuento);
+      var cc = (codigo() || '').trim();
+      $('#codigo-estado').textContent = !cc ? '' : r.codigo ? '¡Hecho! 10 % menos.' : 'Ese código no existe.';
       $('#falta').hidden = !r.faltaParaEnvioGratis;
       $('#falta').textContent = 'Te faltan ' + eur(r.faltaParaEnvioGratis) + ' para el envío gratis.';
-      $('#errores-cesta').innerHTML = r.errores.length && c.length ? '<p class="error">' + r.errores.map(esc).join('<br>') + '</p>' : '';
+      var errs = r.errores.filter(function (e) { return e.indexOf('El código') !== 0; });
+      $('#errores-cesta').innerHTML = errs.length && c.length ? '<p class="error">' + errs.map(esc).join('<br>') + '</p>' : '';
     };
     cargarCatalogo().then(function () {
       pintarCesta();
@@ -227,11 +237,12 @@
         guardarCesta(c); pintarCesta();
       });
       $$('input[name="entrega"]').forEach(function (r) { r.addEventListener('change', pintarCesta); });
+      $('#codigo').addEventListener('input', pintarCesta);
       form.addEventListener('submit', function (e) {
         e.preventDefault();
         var boton = $('#hacer-pedido');
         boton.disabled = true; boton.textContent = 'Enviando…';
-        var datos = { lineas: leerCesta(), entrega: entrega(), cliente: { nombre: form.nombre.value, email: form.email.value } };
+        var datos = { lineas: leerCesta(), entrega: entrega(), codigo: codigo(), cliente: { nombre: form.nombre.value, email: form.email.value } };
         fetch('api/pedido', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(datos) })
           .then(function (r) {
             if (!(r.headers.get('content-type') || '').includes('json')) throw new Error('sin api');
@@ -239,7 +250,7 @@
           })
           .catch(function () {
             // Vista previa sin servidor: se calcula aquí mismo.
-            var r = RaroCalc.calcularPedido(catalogo, datos.lineas, datos.entrega);
+            var r = RaroCalc.calcularPedido(catalogo, datos.lineas, datos.entrega, datos.codigo);
             return r.ok ? Object.assign({ pedido: RaroCalc.numeroPedido(), nombre: datos.cliente.nombre.split(' ')[0], calculadoEn: 'navegador' }, r) : r;
           })
           .then(function (r) {
@@ -250,7 +261,7 @@
             $('#hecho').hidden = false;
             $('#num-pedido').textContent = r.pedido;
             $('#hecho-nombre').textContent = r.nombre;
-            $('#hecho-total').textContent = eur(r.total);
+            $('#hecho-total').textContent = eur(r.total) + (r.descuento ? ' (con tu 10 % de bienvenida)' : '');
             $('#hecho-entrega').textContent = r.entrega === 'envio' || datos.entrega === 'envio' ? 'Te lo mandamos a casa.' : 'Te esperamos en la tienda para recogerlo.';
             $('#hecho-donde').textContent = r.calculadoEn === 'servidor' ? 'Total calculado en el servidor de Vercel.' : 'Vista previa: total calculado en tu navegador.';
             scrollTo(0, 0);

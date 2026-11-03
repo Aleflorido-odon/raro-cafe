@@ -14,13 +14,13 @@ module.exports = (req, res) => {
   if (typeof body === 'string') {
     try { body = JSON.parse(body); } catch (e) { body = {}; }
   }
-  const { lineas, entrega, cliente } = body;
+  const { lineas, entrega, cliente, codigo } = body;
   const errores = [];
   if (!cliente || !String(cliente.nombre || '').trim()) errores.push('Falta tu nombre.');
   if (!cliente || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(cliente.email || ''))) errores.push('El email no es válido.');
   if (!['recogida', 'envio'].includes(entrega)) errores.push('Elige recogida o envío.');
 
-  const r = calcularPedido(catalogo, lineas, entrega);
+  const r = calcularPedido(catalogo, lineas, entrega, codigo);
   const todos = errores.concat(r.errores);
   if (todos.length) return res.status(400).json({ ok: false, errores: todos });
 
@@ -31,6 +31,8 @@ module.exports = (req, res) => {
     entrega,
     lineas: r.lineas,
     subtotal: r.subtotal,
+    descuento: r.descuento,
+    codigo: r.codigo,
     envio: r.envio,
     total: r.total,
     calculadoEn: 'servidor',

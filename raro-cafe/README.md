@@ -31,7 +31,7 @@ No hay base de datos ni pagos reales: es un proyecto de clase. Para cobrar de ve
 
 ## Vídeo de la portada
 
-Guarda tu vídeo como `assets/video/cafe.mp4` (5-10 segundos, sin sonido, horizontal, menos de 6 MB). Se reproduce solo, en bucle y de fondo. Mientras no esté, se ve la foto del cold brew.
+Guarda tu vídeo como `assets/video/cafe.mp4` (5-10 segundos, sin sonido, horizontal, menos de 6 MB). Se reproduce solo, en bucle y de fondo. Mientras no esté, se ve la foto de la portada.
 
 ## Publicar en Vercel (gratis, con HTTPS)
 
